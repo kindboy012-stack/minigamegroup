@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🃏 카드 짝 맞추기</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #e6f1ff;
+      padding: 20px;
+    }
+
+    a.home-btn {
+      position: fixed;
+      top: 14px; left: 14px;
+      padding: 6px 14px;
+      background: rgba(15,52,96,0.9);
+      color: #a8b2d8;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid rgba(233,69,96,0.3);
+      transition: all 0.2s;
+      z-index: 99;
+    }
+    a.home-btn:hover { color: #fff; border-color: #e94560; }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      color: #e94560;
+      letter-spacing: 2px;
+    }
+
+    .stat-bar {
+      display: flex;
+      gap: 28px;
+      margin-bottom: 14px;
+      background: #16213e;
+      padding: 10px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .stat-bar span { display: flex; align-items: center; gap: 6px; }
+    .stat-bar strong { color: #e94560; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 8px 20px;
+      border: 2px solid #e94560;
+      background: transparent;
+      color: #eee;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    button:hover, button.active { background: #e94560; color: #fff; }
+
+    #grid {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      width: 72px;
+      height: 72px;
+      perspective: 600px;
+      cursor: pointer;
+    }
+
+    .card.small {
+      width: 56px;
+      height: 56px;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.35s ease;
+      border-radius: 10px;
+    }
+
+    .card.flipped .card-inner,
+    .card.matched .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .card-front {
+      background: #0f3460;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+      font-size: 1.6rem;
+      color: rgba(255,255,255,0.08);
+    }
+    .card-front::after {
+      content: '?';
+      font-size: 1.4rem;
+      color: rgba(255,255,255,0.15);
+      font-weight: bold;
+    }
+
+    .card-back {
+      background: #16213e;
+      border: 2px solid #0f3460;
+      transform: rotateY(180deg);
+      font-size: 2rem;
+    }
+
+    .card.small .card-back { font-size: 1.4rem; }
+
+    .card.matched .card-back {
+      background: #0f3460;
+      border-color: #e94560;
+      box-shadow: 0 0 12px rgba(233,69,96,0.3);
+    }
+
+    #message {
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-height: 28px;
+      color: #e94560;
+    }
+    #message.win { color: #81c784; }
+  </style>
+</head>
+<body>
+
+<a href="index.html" class="home-btn">← 홈</a>
+
+<h1>🃏 카드 짝 맞추기</h1>
+
+<div class="stat-bar">
+  <span>이동 <strong id="moves">0</strong>회</span>
+  <span>맞춤 <strong id="matched">0</strong></span>
+  <span>⏱ <strong id="timer">0</strong>s</span>
+</div>
+
+<div class="controls">
+  <button class="active" id="btn4" onclick="setSize(4)">4×4 (쉬움)</button>
+  <button id="btn6" onclick="setSize(6)">6×6 (보통)</button>
+  <button onclick="initGame()">🔄 다시 시작</button>
+</div>
+
+<div id="grid"></div>
+<div id="message"></div>
+
+<script>
+  const gridEl = document.getElementById('grid');
+  const movesEl = document.getElementById('moves');
+  const matchedEl = document.getElementById('matched');
+  const timerEl = document.getElementById('timer');
+  const msgEl = document.getElementById('message');
+
+  const EMOJIS_4 = ['🎮','🎯','🏆','🎪','🎨','🎭','🎬','🎤'];
+  const EMOJIS_6 = ['🎮','🎯','🏆','🎪','🎨','🎭','🎬','🎤','🎵','🎸','🎺','🎻','🥁','🎹','🎲','🎳','🎱','🎰'];
+
+  let SIZE = 4;
+  let cards = [], flipped = [], matchCount = 0, moves = 0, lock = false;
+  let timerInterval, seconds = 0, started = false;
+
+  function setSize(s) {
+    SIZE = s;
+    document.getElementById('btn4').classList.toggle('active', s === 4);
+    document.getElementById('btn6').classList.toggle('active', s === 6);
+    initGame();
+  }
+
+  function initGame() {
+    clearInterval(timerInterval);
+    flipped = [];
+    matchCount = 0;
+    moves = 0;
+    seconds = 0;
+    started = false;
+    lock = false;
+    movesEl.textContent = 0;
+    matchedEl.textContent = '0/' + (SIZE * SIZE / 2);
+    timerEl.textContent = 0;
+    msgEl.textContent = '';
+    msgEl.className = '';
+
+    const total = SIZE * SIZE;
+    const pool = (SIZE === 4 ? EMOJIS_4 : EMOJIS_6).slice(0, total / 2);
+    const deck = [...pool, ...pool].sort(() => Math.random() - 0.5);
+
+    gridEl.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
+    gridEl.innerHTML = '';
+    cards = [];
+
+    deck.forEach((emoji, i) => {
+      const card = document.createElement('div');
+      card.className = 'card' + (SIZE === 6 ? ' small' : '');
+      card.dataset.emoji = emoji;
+      card.dataset.idx = i;
+      card.innerHTML = `<div class="card-inner"><div class="card-front"></div><div class="card-back">${emoji}</div></div>`;
+      card.addEventListener('click', onCardClick);
+      gridEl.appendChild(card);
+      cards.push(card);
+    });
+  }
+
+  function onCardClick(e) {
+    const card = e.currentTarget;
+    if (lock || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+    if (!started) {
+      started = true;
+      timerInterval = setInterval(() => { timerEl.textContent = ++seconds; }, 1000);
+    }
+
+    card.classList.add('flipped');
+    flipped.push(card);
+
+    if (flipped.length === 2) {
+      lock = true;
+      moves++;
+      movesEl.textContent = moves;
+
+      const [a, b] = flipped;
+      if (a.dataset.emoji === b.dataset.emoji) {
+        a.classList.add('matched');
+        b.classList.add('matched');
+        matchCount++;
+        matchedEl.textContent = matchCount + '/' + (SIZE * SIZE / 2);
+        flipped = [];
+        lock = false;
+
+        if (matchCount === SIZE * SIZE / 2) {
+          clearInterval(timerInterval);
+          msgEl.textContent = `🎉 클리어! ${moves}회 이동 · ${seconds}초`;
+          msgEl.className = 'win';
+        }
+      } else {
+        setTimeout(() => {
+          a.classList.remove('flipped');
+          b.classList.remove('flipped');
+          flipped = [];
+          lock = false;
+        }, 900);
+      }
+    }
+  }
+
+  initGame();
+</script>
+</body>
+</html>
