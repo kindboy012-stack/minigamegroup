@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 미니 게임 모음</title>
+  <style>
+    :root {
+      --red: #e94560;
+      --blue: #0f3460;
+      --dark: #1a1a2e;
+      --mid: #16213e;
+      --light: #a8b2d8;
+      --white: #e6f1ff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--dark);
+      color: var(--white);
+      font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 48px;
+      height: 60px;
+      background: rgba(22, 33, 62, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(233, 69, 96, 0.2);
+    }
+
+    .nav-logo {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: 1px;
+    }
+
+    .nav-logo span { color: var(--red); }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 60px 24px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(233,69,96,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .floating-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .float-item {
+      position: absolute;
+      font-size: 1.8rem;
+      opacity: 0.05;
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(110%) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.05; }
+      90%  { opacity: 0.05; }
+      100% { transform: translateY(-10%) rotate(360deg); opacity: 0; }
+    }
+
+    .hero-tag {
+      display: inline-block;
+      padding: 5px 14px;
+      border: 1px solid rgba(233,69,96,0.5);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--red);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      margin-bottom: 14px;
+      line-height: 1.15;
+    }
+
+    .hero h1 span { color: var(--red); }
+
+    .hero p {
+      color: var(--light);
+      font-size: 1.05rem;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* GAME GRID */
+    .games-section {
+      flex: 1;
+      padding: 0 24px 80px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* Center last row if odd count */
+    .games-grid::after {
+      content: '';
+    }
+
+    .game-card {
+      background: var(--mid);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 32px 28px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+      cursor: default;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(233,69,96,0.4);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(233,69,96,0.15);
+    }
+
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .card-difficulty {
+      display: flex;
+      gap: 2px;
+    }
+
+    .star {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.15);
+    }
+
+    .star.on { color: #fbbf24; }
+
+    .card-desc {
+      color: var(--light);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 24px;
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tag {
+      padding: 3px 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 99px;
+      font-size: 0.72rem;
+      color: var(--light);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card-play {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px;
+      background: var(--red);
+      color: #fff;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 700;
+      transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+      box-shadow: 0 4px 16px rgba(233,69,96,0.3);
+    }
+
+    .card-play:hover {
+      background: #c73652;
+      transform: scale(1.02);
+      box-shadow: 0 6px 24px rgba(233,69,96,0.5);
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--mid);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 24px 48px;
+      text-align: center;
+    }
+
+    footer p {
+      color: rgba(168,178,216,0.5);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 48px 20px 36px; }
+      .games-section { padding: 0 16px 60px; }
+      footer { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🎮 <span>미니 게임</span> 모음</div>
+</nav>
+
+<div class="hero">
+  <div class="floating-bg" id="floatingBg"></div>
+  <div class="hero-tag">Browser Games · No Install</div>
+  <h1>지금 바로 즐기는<br><span>미니 게임</span> 5선</h1>
+  <p>설치 없이 브라우저에서 바로 실행. 지뢰찾기부터 2048까지, 시간 가는 줄 모르고 즐겨보세요.</p>
+</div>
+
+<section class="games-section">
+  <div class="games-grid">
+
+    <!-- 지뢰찾기 -->
+    <div class="game-card">
+      <div class="card-icon">💣</div>
+      <div class="card-header">
+        <div class="card-title">지뢰찾기</div>
+        <div class="card-difficulty">
+          <span class="star on">★</span><span class="star on">★</span><span class="star on">★</span>
+        </div>
+      </div>
+      <p class="card-desc">지뢰를 피해 모든 안전한 칸을 열어라! 숫자를 단서로 추리하고, 깃발로 지뢰를 표시하세요. 초급부터 고급까지 3단계 난이도.</p>
+      <div class="card-tags">
+        <span class="tag">🖱 클릭</span>
+        <span class="tag">🚩 우클릭 깃발</span>
+        <span class="tag">추리</span>
+      </div>
+      <a href="minesweeper.html" class="card-play">🎮 플레이</a>
+    </div>
+
+    <!-- 뱀 게임 -->
+    <div class="game-card">
+      <div class="card-icon">🐍</div>
+      <div class="card-header">
+        <div class="card-title">뱀 게임</div>
+        <div class="card-difficulty">
+          <span class="star on">★</span><span class="star on">★</span><span class="star">★</span>
+        </div>
+      </div>
+      <p class="card-desc">먹이를 먹을수록 뱀이 길어집니다! 벽과 자기 몸에 부딪히지 않도록 방향을 조종하며 최고 점수에 도전하세요.</p>
+      <div class="card-tags">
+        <span class="tag">⌨ 방향키 / WASD</span>
+        <span class="tag">점수</span>
+        <span class="tag">속도 증가</span>
+      </div>
+      <a href="snake.html" class="card-play">🎮 플레이</a>
+    </div>
+
+    <!-- 카드 짝 맞추기 -->
+    <div class="game-card">
+      <div class="card-icon">🃏</div>
+      <div class="card-header">
+        <div class="card-title">카드 짝 맞추기</div>
+        <div class="card-difficulty">
+          <span class="star on">★</span><span class="star">★</span><span class="star">★</span>
+        </div>
+      </div>
+      <p class="card-desc">뒤집힌 카드들 중 같은 짝을 찾아보세요! 기억력을 발휘해 최소한의 이동으로 모든 쌍을 매칭하세요.</p>
+      <div class="card-tags">
+        <span class="tag">🖱 클릭</span>
+        <span class="tag">기억력</span>
+        <span class="tag">4×4 / 6×6</span>
+      </div>
+      <a href="memory.html" class="card-play">🎮 플레이</a>
+    </div>
+
+    <!-- 벽돌 깨기 -->
+    <div class="game-card">
+      <div class="card-icon">🧱</div>
+      <div class="card-header">
+        <div class="card-title">벽돌 깨기</div>
+        <div class="card-difficulty">
+          <span class="star on">★</span><span class="star on">★</span><span class="star">★</span>
+        </div>
+      </div>
+      <p class="card-desc">공을 튕겨 모든 벽돌을 부숴버려라! 패들을 조종해 공이 아래로 떨어지지 않게 막으세요. 진행할수록 공이 빨라집니다.</p>
+      <div class="card-tags">
+        <span class="tag">🖱 마우스</span>
+        <span class="tag">⌨ A/D 키</span>
+        <span class="tag">3목숨</span>
+      </div>
+      <a href="breakout.html" class="card-play">🎮 플레이</a>
+    </div>
+
+    <!-- 2048 -->
+    <div class="game-card">
+      <div class="card-icon">🔢</div>
+      <div class="card-header">
+        <div class="card-title">2048</div>
+        <div class="card-difficulty">
+          <span class="star on">★</span><span class="star on">★</span><span class="star">★</span>
+        </div>
+      </div>
+      <p class="card-desc">같은 숫자를 합쳐 2048을 만들어라! 방향키로 모든 타일을 밀어 숫자를 합치고, 전략적으로 높은 점수를 노려보세요.</p>
+      <div class="card-tags">
+        <span class="tag">⌨ 방향키</span>
+        <span class="tag">👆 스와이프</span>
+        <span class="tag">전략</span>
+      </div>
+      <a href="2048.html" class="card-play">🎮 플레이</a>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p>HTML · CSS · JavaScript · 순수 브라우저 게임 모음 © 2026</p>
+</footer>
+
+<script>
+  const bg = document.getElementById('floatingBg');
+  const icons = ['🎮','🕹','🏆','⭐','🎯','💫','🎪','🎲'];
+  for (let i = 0; i < 20; i++) {
+    const el = document.createElement('span');
+    el.className = 'float-item';
+    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+    el.style.left = Math.random() * 100 + '%';
+    el.style.animationDuration = (14 + Math.random() * 16) + 's';
+    el.style.animationDelay = (-Math.random() * 30) + 's';
+    el.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+    bg.appendChild(el);
+  }
+</script>
+
+</body>
+</html>
